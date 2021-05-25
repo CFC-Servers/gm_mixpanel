@@ -3,10 +3,11 @@ import insert, Merge from table
 import CRC, TableToJSON from util
 
 rawset = rawset
+timerExists = timer.Exists
 mixpanelToken = CreateConVar "mixpanel_token", "<empty>", FCVAR_REPLICATED, "Mixpanel project token"
 
 class MixpanelInterface
-    token: mixpanelToken:GetString!
+    getToken: -> mixpanelToken:GetString!
     Logger = CFCLogger and CFCLogger("Mixpanel") or {
         debug: (...) => print ...,
         info: (...) => print ...,
@@ -14,14 +15,20 @@ class MixpanelInterface
     }
 
     baseUrl: "https://api.mixpanel.com"
-    trackUrl: "#{@baseUrl}/track#live-event"
     batchTrackUrl: "#{@baseUrl}/track#past-events-batch"
+    queueTimer: "Mixpanel_QueueGroomer"
 
     eventQueue: {}
 
+    _clearQueue: () =>
+        for i = 1, queueSize
+            rawset @eventQueue, i, nil
+
     _sendQueue: () =>
-        body = TableToJSON @eventQueue
         queueSize = #@eventQueue
+        return unless queueSize > 0
+
+        body = TableToJSON @eventQueue
 
         HTTP
             method: "POST",
@@ -31,14 +38,16 @@ class MixpanelInterface
             success: (code) -> @Logger\debug "Mixpanel issued event queue of size '#{queueSize}' with status code: '#{code}'", @eventQueue
             faied: (reason) -> @Logger\error "Mixpanel failed to send event queue of size '#{queueSize}' with reason: '#{reason}'", @eventQueue
 
-        for i = 1, queueSize
-            rawset @eventQueue, i, nil
-
     _queueEvent: (event) =>
         insert @eventQueue event
 
+    _startQueueGroomer: () =>
+        timer.Create @queueTimer, @queueInterval, 0, -> pcall -> @_sendQueue
+
     _trackEvent: (eventName, eventProperties) =>
-        eventProperties.token = @token
+        @_startQueueGroomer! unless timerExists @queueTimer
+
+        eventProperties.token = @getToken!
 
         data =
             event: eventName,
