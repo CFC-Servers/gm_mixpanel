@@ -2,18 +2,19 @@ require "cfclogger"
 import insert, Merge from table
 import CRC, TableToJSON from util
 
+urlencode = include "gm_mixpanel/lib/urlencode.lua"
+
 rawset = rawset
 SysTime = SysTime
 timerExists = timer.Exists
 
-mixpanelToken = CreateConVar "mixpanel_token", "<empty>", FCVAR_REPLICATED, "Mixpanel project token"
+mixpanelToken = GetConVar "mixpanel_token"
+getToken = -> mixpanelToken\GetString!
 
 startTime = os.time!
 getTimestamp = -> startTime + SysTime!
 
 class MixpanelInterface
-    getToken: -> mixpanelToken\GetString!
-
     _logger = (...) => print "[Mixpanel]", ...
     Logger = CFCLogger and CFCLogger("Mixpanel") or {
         debug: _logger,
@@ -21,48 +22,79 @@ class MixpanelInterface
         error: (...) => error ...
     }
 
-    baseUrl: "https://api.mixpanel.com"
-    trackUrl: "#{@baseUrl}/track#live-event"
-    batchTrackUrl: "#{@baseUrl}/track#past-events-batch"
-    queueTimer: "Mixpanel_QueueGroomer"
+    VERBOSE = true
 
-    eventQueue: {}
+    baseUrl = "https://api.mixpanel.com"
+    trackUrl = "#{baseUrl}/track#live-event"
+    batchTrackUrl = "#{baseUrl}/track#past-events-batch"
+    queueTimer = "Mixpanel_QueueGroomer"
+    headers = {
+        "Accept": "text/plain",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
 
-    _clearQueue: () =>
-        queueSize = #@eventQueue
+    eventQueue = {}
+
+    _clearQueue = () ->
+        queueSize = #eventQueue
         for i = 1, queueSize
-            rawset @eventQueue, i, nil
+            rawset eventQueue, i, nil
 
-    _sendData: (url, data) =>
-        dataSize = #data
-        formattedData = TableToJSON data
+    _sendData = (url, data) ->
+        dataSize = #data == 0 and 1 or #data
+
+        jsonData = TableToJSON data
+        formattedData = {
+            data: jsonData,
+            verbose: tostring(VERBOSE and 1 or 0)
+        }
+
+        body = urlencode.table formattedData
+
+        onSuccess = (code, respBody, respHeaders) -> Logger\debug "Successfully tracked #{dataSize} event(s)", code, respBody, respHeaders
+        onFailure = (...) -> Logger\error "Failed to track #{dataSize} event(s)!", data, ...
+
+        requestHeaders = { "Content-Length": tostring #body }
+        requestHeaders = Merge requestHeaders, headers
+
+        with Logger
+            \debug "Making request:"
+            \debug "URL: ", url
+            \debug "Formatted Data", formattedData
+            \debug "Request Headers", requestHeaders
+            \debug "Body", body
 
         HTTP
-            method: "POST",
-            url: url,
-            type: "application/x-www-form-urlencoded"
-            parameters:
-                data: formattedData
-            success: (code) -> @Logger\debug "Successfully tracked #{dataSize} event(s)"
-            failed: (reason) -> @Logger\error "Failed to track #{dataSize} event(s)!", data, formattedData
+            success: onSuccess
+            failed: onFailure
+            method: "POST"
+            url: url
+            headers: requestHeaders
+            body: body
+            type: headers["Content-Type"]
 
-    _sendQueue: () =>
-        queueSize = #@eventQueue
+    _sendQueue = ->
+        Logger\debug "Checking queue"
+
+        queueSize = #eventQueue
         return unless queueSize > 0
 
-        @_sendData @batchTrackUrl, @eventQueue
+        Logger\debug "Sending queue (#{queueSize} events)"
 
-    _queueEvent: (event) =>
-        insert @eventQueue event
-        @_sendQueue! if #@eventQueue > 50
+        _sendData batchTrackUrl, eventQueue
+        _clearQueue!
 
-    _startQueueGroomer: () =>
-        timer.Create @queueTimer, @queueInterval, 0, -> pcall -> @_sendQueue!
+    _queueEvent = (event) ->
+        insert eventQueue, event
+        _sendQueue! if #eventQueue > 50
 
-    _trackEvent: (eventName, eventProperties, reliable) =>
-        @_startQueueGroomer! unless timerExists @queueTimer
+    _startQueueGroomer = () ->
+        timer.Create queueTimer, 1, 0, -> _sendQueue!
 
-        eventProperties.token = @getToken!
+    _trackEvent = (eventName, eventProperties, reliable=false) ->
+        _startQueueGroomer! unless timerExists queueTimer
+
+        eventProperties.token = getToken!
         eventProperties.time = getTimestamp!
 
         data =
@@ -70,24 +102,24 @@ class MixpanelInterface
             properties: eventProperties,
 
         if reliable
-            return @_sendData @trackUrl, data
+            return _sendData trackUrl, data
 
-        @_queueEvent data
+        _queueEvent data
 
-    getPlyIdentifiers: (ply) =>
+    _getPlyIdentifiers = (ply) =>
         {
             distinct_id: ply\SteamID64!
             ip: CRC ply\IPAddress!
         }
 
-    TrackPlayerEvent: (eventName, ply, eventProperties, reliable=false) =>
-        Merge eventProperties, @getPlyIdentifiers ply
+    TrackPlayerEvent: (eventName, ply, eventProperties, reliable) ->
+        Merge eventProperties, _getPlyIdentifiers ply
 
-        @_trackEvent eventName, eventProperties, reliable
+        _trackEvent eventName, eventProperties, reliable
 
-    TrackEvent: (eventName, identifier, eventProperties, reliable=false) =>
+    TrackEvent: (eventName, identifier, eventProperties, reliable) ->
         eventProperties.distinct_id = identifier
 
-        @_trackEvent eventName, eventProperties, reliable
+        _trackEvent eventName, eventProperties, reliable
 
 export Mixpanel = MixpanelInterface!
