@@ -5,8 +5,21 @@ This library can be used in any existing addon, allowing you to track events and
 
 This enables better understanding how users interact with your products, allowing you to make better, more impactful products.
 
-# Installation
- -- TODO: Copy from our other moonscript repos
+
+## Requirements
+ - [CFC Logger](https:/github.com/CFC-Servers/cfc_logger) _Optional, increases logging capability_
+
+
+## Installation
+Simply download a copy of the zip, or clone the repository straight into your addons folder! 
+
+Pre-compiled versions are available in **[Releases](https://github.com/CFC-Servers/gm_mixpanel/releases/)**
+
+The [`lua` branch](https://github.com/CFC-Servers/gm_mixpanel/tree/lua) is a lua-only branch containing the compiled code from the most recent release. One can use this to easily keep `gm_mixpanel` up to date.
+```sh
+git clone --single-branch --branch lua git@github.com:CFC-Servers/gm_mixpanel.git
+```
+
 
 # Usage
 First, be sure to set the Mixpanel Token convar.
@@ -24,6 +37,7 @@ Mixpanel.TrackPlyEvent( eventName, ply, data, reliable)
 
 Mixpanel.TrackEvent( eventName, identifier, data, reliable)
 ```
+
 
 ## Parameters
 
