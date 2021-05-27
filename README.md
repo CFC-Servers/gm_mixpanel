@@ -25,20 +25,20 @@ Mixpanel.TrackPlyEvent( eventName, ply, data, reliable)
 Mixpanel.TrackEvent( eventName, identifier, data, reliable)
 ```
 
-**Parameters:**
+## Parameters
 
-## `eventName`
+**`eventName`**
  - Both functions take an `eventName`, which you should be familiar with. It's anything you want.
 
-## `ply`/`identifier`
+**`ply`/`identifier`**
  - `TrackPlyEvent` takes a valid player entity and attaches their SteamID64 and a [CRC'd](https://wiki.facepunch.com/gmod/util.CRC) IP address to your event
  - `TrackEvent` simply takes an identifier (`string`) to attach to the event
 
-## `data`
+**`data`**
  - The `data` parameter is a table of `string`->`string/int/boolean` describing any extra information about your event.
  - Defaults to `{}`, so you can omit it if no additional information is needed
 
-## `reliable`
+**`reliable`**
  - The `reliable` flag determines whether or not the event is sent immediately (true), or queued up to be sent in the next batch request (false).
  - It's usually best to leave this as `false` (the default value) unless it's unacceptable for your event to be lost in the event of a server crash.
 
@@ -75,7 +75,7 @@ lbl:SetText( "Create Team" )
 lbl:SetMouseInputEnabled( true )
 
 function lbl:DoClick()
-	Mixpanel.TrackPlyEvent( "Create Team Clicked", LocalPlayer() )
-	createTeam()
+    Mixpanel.TrackPlyEvent( "Create Team Clicked", LocalPlayer() )
+    createTeam()
 end
 ```
