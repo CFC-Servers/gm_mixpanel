@@ -1,18 +1,17 @@
 require "cfclogger"
+
+import Post from http
 import insert, Merge from table
 import CRC, TableToJSON from util
+import rawset, SysTime, tostring from _G
 
-urlencode = include "gm_mixpanel/lib/urlencode.lua"
-
-rawset = rawset
-SysTime = SysTime
 timerExists = timer.Exists
 
-mixpanelToken = GetConVar "mixpanel_token"
-getToken = -> mixpanelToken\GetString!
+TOKEN = GetConVar "mixpanel_token"
+getToken = -> TOKEN\GetString!
 
-startTime = os.time!
-getTimestamp = -> startTime + SysTime!
+START_TIME = os.time!
+getTimestamp = -> tostring START_TIME + SysTime!
 
 class MixpanelInterface
     _logger = (...) => print "[Mixpanel]", ...
@@ -22,17 +21,17 @@ class MixpanelInterface
         error: (...) => error ...
     }
 
-    VERBOSE = true
+    VERBOSE: true
 
-    baseUrl = "https://api.mixpanel.com"
-    trackUrl = "#{baseUrl}/track#live-event"
-    batchTrackUrl = "#{baseUrl}/track#past-events-batch"
+    trackUrl = "http://api.mixpanel.com/track"
     queueTimer = "Mixpanel_QueueGroomer"
     headers = {
         "Accept": "text/plain",
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
+    -- Mixpanel implements a limit of 50 events per batch tracking call
+    MAX_QUEUE_SIZE = 50
     eventQueue = {}
 
     _clearQueue = () ->
@@ -40,38 +39,20 @@ class MixpanelInterface
         for i = 1, queueSize
             rawset eventQueue, i, nil
 
-    _sendData = (url, data) ->
-        dataSize = #data == 0 and 1 or #data
+    _sendEventData = (data) ->
+        -- Will be an event table if one event, and a table of tables if many
+        eventCount = #data == 0 and 1 or #data
 
-        jsonData = TableToJSON data
-        formattedData = {
-            data: jsonData,
-            verbose: tostring(VERBOSE and 1 or 0)
-        }
+        formattedData =
+            data: TableToJSON data
+            verbose: tostring VERBOSE and 1 or 0
 
-        body = urlencode.table formattedData
+        onSuccess = (respBody, size, respHeaders, code) ->
+            Logger\debug "Successfully tracked #{eventCount} event(s)", code, respBody, size, respHeaders
+        onFailure = (...) ->
+            Logger\error "Failed to track #{eventCount} event(s)!", data, ...
 
-        onSuccess = (code, respBody, respHeaders) -> Logger\debug "Successfully tracked #{dataSize} event(s)", code, respBody, respHeaders
-        onFailure = (...) -> Logger\error "Failed to track #{dataSize} event(s)!", data, ...
-
-        requestHeaders = { "Content-Length": tostring #body }
-        requestHeaders = Merge requestHeaders, headers
-
-        with Logger
-            \debug "Making request:"
-            \debug "URL: ", url
-            \debug "Formatted Data", formattedData
-            \debug "Request Headers", requestHeaders
-            \debug "Body", body
-
-        HTTP
-            success: onSuccess
-            failed: onFailure
-            method: "POST"
-            url: url
-            headers: requestHeaders
-            body: body
-            type: headers["Content-Type"]
+        Post trackUrl, formattedData, onSuccess, onFailure, headers
 
     _sendQueue = ->
         Logger\debug "Checking queue"
@@ -81,12 +62,12 @@ class MixpanelInterface
 
         Logger\debug "Sending queue (#{queueSize} events)"
 
-        _sendData batchTrackUrl, eventQueue
+        _sendEventData eventQueue
         _clearQueue!
 
     _queueEvent = (event) ->
         insert eventQueue, event
-        _sendQueue! if #eventQueue > 50
+        _sendQueue! if #eventQueue > MAX_QUEUE_SIZE
 
     _startQueueGroomer = () ->
         timer.Create queueTimer, 1, 0, -> _sendQueue!
@@ -101,16 +82,13 @@ class MixpanelInterface
             event: eventName,
             properties: eventProperties,
 
-        if reliable
-            return _sendData trackUrl, data
+        return _sendEventData(data) if reliable
 
         _queueEvent data
 
     _getPlyIdentifiers = (ply) =>
-        {
-            distinct_id: ply\SteamID64!
-            ip: CRC ply\IPAddress!
-        }
+        distinct_id: ply\SteamID64!
+        ip: CRC ply\IPAddress!
 
     TrackPlayerEvent: (eventName, ply, eventProperties, reliable) ->
         Merge eventProperties, _getPlyIdentifiers ply
