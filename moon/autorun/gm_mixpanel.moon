@@ -1,3 +1,5 @@
+import CRC from util
+
 AddCSLuaFile "includes/modules/mixpanel.lua"
 CreateConVar "mixpanel_token", "<empty>", FCVAR_REPLICATED, "Mixpanel project token"
 
@@ -7,7 +9,7 @@ if SERVER
     util.AddNetworkString playerIdentifierEvent
     net.Receive playerIdentifierEvent, (_, ply) ->
         net.Start playerIdentifierEvent
-        net.WriteString CFC ply\IPAddress!
+        net.WriteString CRC ply\IPAddress!
         net.Send ply
 
 if CLIENT
