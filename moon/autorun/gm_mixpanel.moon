@@ -6,7 +6,7 @@ playerIdentifierEvent = "MixPanel_PlayerIdentifier"
 if SERVER
     util.AddNetworkString playerIdentifierEvent
     net.Receive playerIdentifierEvent, (_, ply) ->
-        net.Start!
+        net.Start playerIdentifierEvent
         net.WriteString CFC ply\IPAddress!
         net.Send ply
 
