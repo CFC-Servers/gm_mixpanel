@@ -55,8 +55,6 @@ class MixpanelBase
         Post @trackUrl, formattedData, onSuccess, onFailure, @headers
 
     _sendQueue: =>
-        @Logger\debug "Checking queue"
-
         queueSize = #@eventQueue
         return unless queueSize > 0
 
@@ -70,7 +68,7 @@ class MixpanelBase
         @_sendQueue! if #@eventQueue > @MAX_QUEUE_SIZE
 
     _startQueueGroomer: =>
-        timer.Create @queueTimer, 1, 0, -> pcall @_sendQueue!
+        timer.Create @queueTimer, 1, 0, -> pcall -> @_sendQueue!
 
     _trackEvent: (eventName, eventProperties, reliable=false) =>
         @_startQueueGroomer! unless timerExists @queueTimer
