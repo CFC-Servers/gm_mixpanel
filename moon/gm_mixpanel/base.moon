@@ -48,7 +48,7 @@ class MixpanelBase
             verbose: tostring @VERBOSE and 1 or 0
 
         onSuccess = (respBody, size, respHeaders, code) ->
-            @Logger\debug "Successfully tracked #{eventCount} event(s)", code, respBody, size, respHeaders
+            @Logger\debug "Successfully tracked #{eventCount} event(s)"
         onFailure = (...) ->
             @Logger\error "Failed to track #{eventCount} event(s)!", data, ...
 

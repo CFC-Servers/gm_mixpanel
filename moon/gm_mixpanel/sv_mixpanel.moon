@@ -3,9 +3,10 @@ import Merge from table
 MixpanelBase = include "gm_mixpanel/base.lua"
 
 class MixpanelInterface extends MixpanelBase
-    _getPlyIdentifiers: (ply) =>
+    _getPlyIdentifiers: (ply) => {
         distinct_id: ply\SteamID64!
         ip: CRC ply\IPAddress!
+    }
 
     TrackEvent: (name, properties={}, reliable=false) =>
         properties.distinct_id = "server"
