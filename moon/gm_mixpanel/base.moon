@@ -48,19 +48,19 @@ class MixpanelBase
             verbose: tostring @VERBOSE and 1 or 0
 
         onSuccess = (respBody, size, respHeaders, code) ->
-            Logger\debug "Successfully tracked #{eventCount} event(s)", code, respBody, size, respHeaders
+            @Logger\debug "Successfully tracked #{eventCount} event(s)", code, respBody, size, respHeaders
         onFailure = (...) ->
-            Logger\error "Failed to track #{eventCount} event(s)!", data, ...
+            @Logger\error "Failed to track #{eventCount} event(s)!", data, ...
 
         Post @trackUrl, formattedData, onSuccess, onFailure, @headers
 
     _sendQueue: =>
-        Logger\debug "Checking queue"
+        @Logger\debug "Checking queue"
 
         queueSize = #@eventQueue
         return unless queueSize > 0
 
-        Logger\debug "Sending queue (#{queueSize} events)"
+        @Logger\debug "Sending queue (#{queueSize} events)"
 
         @_sendEventData @eventQueue
         @_clearQueue!

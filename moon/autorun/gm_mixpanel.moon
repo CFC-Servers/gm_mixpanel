@@ -1,11 +1,14 @@
 import CRC from util
 
-AddCSLuaFile "includes/modules/mixpanel.lua"
 CreateConVar "mixpanel_token", "<empty>", FCVAR_REPLICATED, "Mixpanel project token"
 
 playerIdentifierEvent = "MixPanel_PlayerIdentifier"
 
 if SERVER
+    AddCSLuaFile "includes/modules/mixpanel.lua"
+    AddCSLuaFile "gm_mixpanel/cl_mixpanel.lua"
+    AddCSLuaFile "gm_mixpanel/base.lua"
+
     util.AddNetworkString playerIdentifierEvent
     net.Receive playerIdentifierEvent, (_, ply) ->
         net.Start playerIdentifierEvent
