@@ -1,4 +1,5 @@
 # Mixpanel Interface
+
 mixpanel.com interface for Gmod
 
 This library can be used in any existing addon, allowing you to track events and interactions with your addons.
@@ -11,7 +12,7 @@ This enables better understanding how users interact with your products, allowin
 
 
 ## Installation
-Simply download a copy of the zip, or clone the repository straight into your addons folder! 
+Simply download a copy of the zip, or clone the repository straight into your addons folder!
 
 Pre-compiled versions are available in **[Releases](https://github.com/CFC-Servers/gm_mixpanel/releases/)**
 
@@ -31,35 +32,38 @@ Once you have it, set the following convar:
 mixpanel_token "my token"
 ```
 
-There are only two functions:
+On both Client and Server, the following method is available.
 ```lua
-Mixpanel.TrackPlyEvent( eventName, ply, data, reliable)
+Mixpanel:TrackEvent( eventName, data, reliable )
+```
 
-Mixpanel.TrackEvent( eventName, identifier, data, reliable)
+
+Serverside offers another method that allows you to tie an event to a player.
+```lua
+Mixpanel:TrackPlyEvent( eventName, ply, data, reliable )
 ```
 
 
 ## Parameters
 
-**`eventName`**
- - Both functions take an `eventName`, which you should be familiar with. It's anything you want.
+**`eventName`** _(required)_
+ - Both functions take an `eventName`, which you should be familiar with. It's anything you want. Usually this is a short phrase with spaces. (i.e. `"user chose weapon"`)
 
-**`ply`/`identifier`**
- - `TrackPlyEvent` takes a valid player entity and attaches their SteamID64 and a [CRC'd](https://wiki.facepunch.com/gmod/util.CRC) IP address to your event
- - `TrackEvent` simply takes an identifier (`string`) to attach to the event
+**`ply` _(required)_
+ - `TrackPlyEvent` takes a valid player entity and uses it to attach their SteamID64 and a [CRC'd](https://wiki.facepunch.com/gmod/util.CRC) IP address to your event
 
-**`data`**
+**`data`** _(optional)_
  - The `data` parameter is a table of `string`->`string/int/boolean` describing any extra information about your event.
  - Defaults to `{}`, so you can omit it if no additional information is needed
 
-**`reliable`**
+**`reliable`** _(optional)_
  - The `reliable` flag determines whether or not the event is sent immediately (true), or queued up to be sent in the next batch request (false).
  - It's usually best to leave this as `false` (the default value) unless it's unacceptable for your event to be lost in the event of a server crash.
 
 
-`TrackPlyEvent` is used to track an event relating to a player, whereas `TrackEvent` is a more flexible option.
+`TrackPlyEvent` is used to track an event relating to a player, whereas `TrackEvent` is a more general option.
 
-Often, `TrackEvent` could be used on the server to track player-independent events. In our case, we pass `Server` as the identifier.
+Often, `TrackEvent` could be used on the server to track player-independent events.
 
 
 The usage is pretty simple. Here are some examples.
@@ -69,13 +73,13 @@ The usage is pretty simple. Here are some examples.
 -- sv_chat_tracker.lua
 require( "mixpanel" )
 
-hook.Add( "PlayerSay", "MixPanel_Example", function( ply, text, isTeam )
+hook.Add( "PlayerSay", "Mixpanel_Example", function( ply, text, isTeam )
     local eventData = {
         text = text,
         isTeam = isTeam
     }
 
-    Mixpanel.TrackPlyEvent( "Player Say", ply, eventData )
+    Mixpanel:TrackPlyEvent( "Player Say", ply, eventData )
 end )
 ```
 
@@ -89,7 +93,7 @@ lbl:SetText( "Create Team" )
 lbl:SetMouseInputEnabled( true )
 
 function lbl:DoClick()
-    Mixpanel.TrackPlyEvent( "Create Team Clicked", LocalPlayer() )
+    Mixpanel:TrackEvent( "Create team clicked" )
     createTeam()
 end
 ```

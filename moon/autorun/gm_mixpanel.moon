@@ -2,7 +2,7 @@ import CRC from util
 
 CreateConVar "mixpanel_token", "<empty>", FCVAR_REPLICATED, "Mixpanel project token"
 
-playerIdentifierEvent = "MixPanel_PlayerIdentifier"
+playerIdentifierEvent = "Mixpanel_PlayerIdentifier"
 
 if SERVER
     AddCSLuaFile "includes/modules/mixpanel.lua"
