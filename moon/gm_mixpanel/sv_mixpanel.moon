@@ -1,6 +1,7 @@
 import CRC from util
 import Merge from table
 MixpanelBase = include "gm_mixpanel/base.lua"
+include "gm_mixpanel/sv_profile.lua"
 
 class MixpanelInterface extends MixpanelBase
     _getPlyIdentifiers: (ply) => {
@@ -13,6 +14,8 @@ class MixpanelInterface extends MixpanelBase
         @_trackEvent name, properties, reliable
 
     TrackPlyEvent: (name, ply, properties={}, reliable=false) =>
+        return if ply\GetInfoNum("mixpanel_opt_out", 0) == 1
+
         Merge properties, @_getPlyIdentifiers ply
         @_trackEvent name, properties, reliable
 
