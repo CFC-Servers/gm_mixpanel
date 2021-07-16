@@ -17,8 +17,8 @@ class MixpanelProfileInterface extends MixpanelBase
     _trackProfile: (plyData) =>
         @_startQueueGroomer! unless timerExists @queueTimer
 
-        plyData.token = getToken!
-        plyData.time = getTimestamp!
+        plyData.token = @_getToken!
+        plyData.time = @_getTimestamp!
 
         @_queueEvent data
 

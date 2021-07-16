@@ -8,6 +8,6 @@ populatePanel = (panel) ->
 hook.Add "AddToolMenuCategories", "Mixpanel_Menu_Category",  ->
     AddToolCategory "Options", "Telemetry", "Telemetry"
 
-hook.Add "PopulateToolMenu", "CFC_Punt_MenuOption", ->
+hook.Add "PopulateToolMenu", "Mixpanel_MenuOption", ->
     AddToolMenuOption "Options", "Telemetry", "mixpanel_opt_out", "Telemetry", "", "", (panel) ->
         populatePanel panel
