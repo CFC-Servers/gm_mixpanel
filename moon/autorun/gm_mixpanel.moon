@@ -14,13 +14,13 @@ if SERVER
     net.Receive playerIdentifierEvent, (_, ply) ->
         net.Start playerIdentifierEvent
         net.WriteString CRC ply\IPAddress!
-    net.Send ply
+        net.Send ply
 
 if CLIENT
     hook.Add "Think", playerIdentifierEvent, ->
         hook.Remove "Think", playerIdentifierEvent
         net.Start playerIdentifierEvent
-    net.SendToServer!
+        net.SendToServer!
 
     net.Receive playerIdentifierEvent, ->
         LocalPlayer!.mixpanelIdentifier = net.ReadString!
