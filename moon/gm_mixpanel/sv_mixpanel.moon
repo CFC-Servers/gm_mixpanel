@@ -16,4 +16,4 @@ class MixpanelInterface extends MixpanelBase
         Merge properties, @_getPlyIdentifiers ply
         @_trackEvent name, properties, reliable
 
-export Mix = MixpanelInterface!
+export Mixpanel = MixpanelInterface!
