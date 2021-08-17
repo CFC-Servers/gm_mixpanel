@@ -1,4 +1,4 @@
-require "cfclogger"
+require "logger"
 
 import Post from http
 import insert from table
@@ -16,7 +16,7 @@ getTimestamp = -> tostring START_TIME + SysTime!
 class MixpanelBase
     new: =>
         _logger = (...) => print "[Mixpanel]", ...
-        @Logger = CFCLogger and CFCLogger("Mixpanel") or {
+        @Logger = Logger and Logger("Mixpanel") or {
             debug: _logger
             info: _logger
             error: (...) => error ...
