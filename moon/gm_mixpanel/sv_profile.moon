@@ -1,4 +1,5 @@
 import CRC from util
+timerExists = timer.Exists
 MixpanelBase = include "gm_mixpanel/base.lua"
 
 class MixpanelProfileInterface extends MixpanelBase
