@@ -34,6 +34,10 @@ class MixpanelBase
         @MAX_QUEUE_SIZE = 50
         @eventQueue = {}
 
+    _getToken: => getToken!
+
+    _getTimestamp: => getTimestamp!
+
     _clearQueue: =>
         queueSize = #@eventQueue
         for i = 1, queueSize
@@ -73,8 +77,8 @@ class MixpanelBase
     _trackEvent: (eventName, eventProperties, reliable=false) =>
         @_startQueueGroomer! unless timerExists @queueTimer
 
-        eventProperties.token = getToken!
-        eventProperties.time = getTimestamp!
+        eventProperties.token = @_getToken!
+        eventProperties.time = @_getTimestamp!
 
         data =
             event: eventName
