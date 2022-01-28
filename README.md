@@ -8,7 +8,7 @@ This enables better understanding how users interact with your products, allowin
 
 
 ## Requirements
- - [CFC Logger](https:/github.com/CFC-Servers/cfc_logger) _Optional, increases logging capability_
+ - [Logger](https:/github.com/CFC-Servers/gm_logger) _Optional, increases logging capability_
 
 
 ## Installation
